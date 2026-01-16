@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>$HADOWbYT3$ Files</title>
+<style>
+  body {
+    background: #0a0a0a;
+    color: #00ffcc;
+    font-family: monospace;
+    padding: 40px;
+  }
+  h1 {
+    text-shadow: 0 0 10px #00ffcc;
+  }
+  .file {
+    border: 1px solid #00ffcc;
+    padding: 15px;
+    margin-bottom: 10px;
+    background: rgba(0,255,204,0.05);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .file a {
+    color: #00ffaa;
+    text-decoration: none;
+  }
+  .file span {
+    opacity: 0.6;
+    font-size: 0.9em;
+  }
+</style>
+</head>
+<body>
+
+<h1>📁 Compressed Files</h1>
+<p>Auto-fetched from GitHub repository</p>
+
+<div id="files">Loading...</div>
+
+<script>
+const username = "Hackerslacker921"; // your GitHub username
+const repo = "SHADOWBYT3S-BL0G";    // your repo name
+const allowedExtensions = ['.zip','.7z','.rar','.tar.gz','.gz','.tar'];
+
+// Fetch all files in repo root
+fetch(`https://api.github.com/repos/${username}/${repo}/contents/`)
+  .then(res => res.json())
+  .then(data => {
+    const container = document.getElementById('files');
+    container.innerHTML = '';
+
+    const files = data.filter(file => {
+      // Only include files with allowed compressed extensions
+      return file.type === 'file' && allowedExtensions.some(ext => file.name.toLowerCase().endsWith(ext));
+    });
+
+    if(files.length === 0){
+      container.innerHTML = "<p>No compressed files found.</p>";
+      return;
+    }
+
+    files.forEach(file => {
+      const div = document.createElement('div');
+      div.className = 'file';
+      div.innerHTML = `<a href="${file.download_url}" target="_blank">${file.name}</a>
+                       <span>${(file.size/1024/1024).toFixed(2)} MB</span>`;
+      container.appendChild(div);
+    });
+  })
+  .catch(err => {
+    document.getElementById('files').innerText = "Failed to load files.";
+    console.error(err);
+  });
+</script>
+
+</body>
+</html>
