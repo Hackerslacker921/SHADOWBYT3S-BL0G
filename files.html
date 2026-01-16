@@ -13,6 +13,22 @@
   h1 {
     text-shadow: 0 0 10px #00ffcc;
   }
+
+  /* Home button */
+  .home-btn {
+    display: inline-block;
+    margin-bottom: 20px;
+    padding: 10px 20px;
+    border: 1px solid #00ffcc;
+    color: #00ffaa;
+    text-decoration: none;
+    transition: 0.2s;
+  }
+  .home-btn:hover {
+    background: rgba(0,255,204,0.1);
+    box-shadow: 0 0 10px #00ffcc;
+  }
+
   .file {
     border: 1px solid #00ffcc;
     padding: 15px;
@@ -33,6 +49,9 @@
 </style>
 </head>
 <body>
+
+<!-- Home button -->
+<a href="index.html" class="home-btn">🏠 Home</a>
 
 <h1>📁 Compressed Files</h1>
 <p>Auto-fetched from GitHub repository</p>
@@ -77,3 +96,4 @@ fetch(`https://api.github.com/repos/${username}/${repo}/contents/`)
 
 </body>
 </html>
+
