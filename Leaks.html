@@ -1,145 +1,100 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>$HADOWbYT3$ — Leaks</title>
-  <style>
-    body {
-      background: #050505;
-      color: #00ffcc;
-      font-family: monospace;
-      margin: 0;
-      padding: 20px;
-    }
+<meta charset="UTF-8">
+<title>$HADOWbYT3$ — Leaks</title>
+<style>
+  body {
+    background: #0a0a0a;
+    color: #00ffcc;
+    font-family: monospace;
+    padding: 40px;
+  }
 
-    h1 {
-      text-align: center;
-      text-shadow: 0 0 10px #00ffcc;
-    }
+  h1 {
+    text-shadow: 0 0 10px #00ffcc;
+  }
 
-    .container {
-      max-width: 800px;
-      margin: auto;
-    }
+  .home-btn {
+    display: inline-block;
+    margin-bottom: 20px;
+    padding: 10px 20px;
+    border: 1px solid #00ffcc;
+    color: #00ffaa;
+    text-decoration: none;
+    transition: 0.2s;
+  }
 
-    .file {
-      display: flex;
-      justify-content: space-between;
-      padding: 12px;
-      border-bottom: 1px solid #00ffcc33;
-      opacity: 1;
-      transition: 0.3s;
-    }
+  .home-btn:hover {
+    background: rgba(0,255,204,0.1);
+    box-shadow: 0 0 10px #00ffcc;
+  }
 
-    .locked {
-      opacity: 0.4;
-    }
+  .file {
+    border: 1px solid #00ffcc;
+    padding: 15px;
+    margin-bottom: 10px;
+    background: rgba(0,255,204,0.05);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
 
-    .timer {
-      color: #ff4444;
-    }
+  .file a {
+    color: #00ffaa;
+    text-decoration: none;
+  }
 
-    a {
-      color: #00ffcc;
-      text-decoration: none;
-    }
-
-    a:hover {
-      text-shadow: 0 0 5px #00ffcc;
-    }
-
-    .home {
-      display: inline-block;
-      margin-bottom: 20px;
-      padding: 8px 14px;
-      border: 1px solid #00ffcc;
-      border-radius: 4px;
-    }
-  </style>
+  .file span {
+    opacity: 0.6;
+    font-size: 0.9em;
+  }
+</style>
 </head>
 <body>
-  <div class="container">
-    <a class="home" href="index.html">← Home</a>
-    <h1>$HADOWbYT3$ — Leaks</h1>
-    <div id="files">Loading...</div>
-  </div>
 
-  <script>
-    const USER = "Hackerslacker921";
-    const REPO = "SHADOWBYT3S-BL0G";
-    const PATH = ""; // root
-    const LOCK_TIME = 24 * 60 * 60 * 1000; // 24 hours
+<a href="index.html" class="home-btn">🏠 Home</a>
 
-    const allowed = [".zip", ".7z", ".rar", ".tar", ".gz"];
+<h1>📁 Compressed Files</h1>
+<p>Auto-fetched from GitHub repository</p>
 
-    function format(ms) {
-      const s = Math.floor(ms / 1000);
-      const d = Math.floor(s / 86400);
-      const h = Math.floor((s % 86400) / 3600);
-      const m = Math.floor((s % 3600) / 60);
-      const sec = s % 60;
-      return `${d}d ${h}h ${m}m ${sec}s`;
+<div id="files">Loading...</div>
+
+<script>
+const username = "Hackerslacker921"; // your GitHub username
+const repo = "SHADOWBYT3S-BL0G";    // your repo name
+const allowedExtensions = ['.zip','.7z','.rar','.tar.gz','.gz','.tar'];
+
+// Fetch all files in repo root
+fetch(`https://api.github.com/repos/${username}/${repo}/contents/`)
+  .then(res => res.json())
+  .then(data => {
+    const container = document.getElementById('files');
+    container.innerHTML = '';
+
+    const files = data.filter(file => {
+      // Only include files with allowed compressed extensions
+      return file.type === 'file' && allowedExtensions.some(ext => file.name.toLowerCase().endsWith(ext));
+    });
+
+    if(files.length === 0){
+      container.innerHTML = "<p>No compressed files found.</p>";
+      return;
     }
 
-    async function loadFiles() {
-      const res = await fetch(`https://api.github.com/repos/${USER}/${REPO}/contents/${PATH}`);
-      const data = await res.json();
+    files.forEach(file => {
+      const div = document.createElement('div');
+      div.className = 'file';
+      div.innerHTML = `<a href="${file.download_url}" target="_blank">${file.name}</a>
+                       <span>${(file.size/1024/1024).toFixed(2)} MB</span>`;
+      container.appendChild(div);
+    });
+  })
+  .catch(err => {
+    document.getElementById('files').innerText = "Failed to load files.";
+    console.error(err);
+  });
+</script>
 
-      const filesDiv = document.getElementById("files");
-      filesDiv.innerHTML = "";
-
-      const now = Date.now();
-
-      data.forEach(file => {
-        const ext = file.name.slice(file.name.lastIndexOf(".")).toLowerCase();
-        if (!allowed.includes(ext)) return;
-
-        const row = document.createElement("div");
-        row.className = "file";
-
-        fetch(file.url)
-          .then(r => r.json())
-          .then(meta => {
-            const uploaded = new Date(meta.commit.committer.date).getTime();
-            const unlockTime = uploaded + LOCK_TIME;
-
-            if (now < unlockTime) {
-              row.classList.add("locked");
-              const remaining = unlockTime - now;
-              row.innerHTML = `
-                <span>🔒 ${file.name}</span>
-                <span class="timer" data-unlock="${unlockTime}">${format(remaining)}</span>
-              `;
-            } else {
-              row.innerHTML = `
-                <span>${file.name}</span>
-                <a href="${file.download_url}" target="_blank">Download</a>
-              `;
-            }
-          });
-
-        filesDiv.appendChild(row);
-      });
-    }
-
-    function updateTimers() {
-      const timers = document.querySelectorAll(".timer");
-      const now = Date.now();
-
-      timers.forEach(t => {
-        const unlock = parseInt(t.dataset.unlock);
-        const diff = unlock - now;
-
-        if (diff <= 0) {
-          location.reload();
-        } else {
-          t.textContent = format(diff);
-        }
-      });
-    }
-
-    loadFiles();
-    setInterval(updateTimers, 1000);
-  </script>
 </body>
 </html>
