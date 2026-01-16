@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Files - $HADOWbYT3$</title>
+  <style>
+    body {
+      background: #000;
+      color: #00ffcc;
+      font-family: monospace;
+      padding: 30px;
+    }
+
+    h1 {
+      text-shadow: 0 0 10px #00ffcc;
+    }
+
+    a {
+      color: #00ffaa;
+      text-decoration: none;
+    }
+
+    .file {
+      border: 1px solid #00ffcc;
+      padding: 15px;
+      margin-bottom: 10px;
+      background: rgba(0,255,204,0.05);
+    }
+  </style>
+</head>
+<body>
+
+<h1>📁 Files</h1>
+<p>Auto-fetched from GitHub</p>
+
+<div id="files">Loading...</div>
+
+<script>
+  const username = "Hackerslacker921";
+  const repo = "SHADOWBYT3S-BL0G";
+  const path = ""; // leave blank for root, or put folder name
+
+  fetch(`https://api.github.com/repos/${username}/${repo}/contents/${path}`)
+    .then(res => res.json())
+    .then(data => {
+      const container = document.getElementById("files");
+      container.innerHTML = "";
+
+      data.forEach(file => {
+        if (file.type === "file") {
+          const div = document.createElement("div");
+          div.className = "file";
+          div.innerHTML = `<a href="${file.download_url}" target="_blank">${file.name}</a>`;
+          container.appendChild(div);
+        }
+      });
+    })
+    .catch(err => {
+      document.getElementById("files").innerText = "Failed to load files.";
+    });
+</script>
+
+</body>
+</html>
