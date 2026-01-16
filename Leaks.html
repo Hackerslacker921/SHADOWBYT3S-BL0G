@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>$HADOWBYT3$ Files</title>
+<title>$HADOWbYT3$ Files</title>
 <style>
   body {
     background: #0a0a0a;
@@ -10,11 +10,11 @@
     font-family: monospace;
     padding: 40px;
   }
+
   h1 {
     text-shadow: 0 0 10px #00ffcc;
   }
 
-  /* Home button */
   .home-btn {
     display: inline-block;
     margin-bottom: 20px;
@@ -24,6 +24,7 @@
     text-decoration: none;
     transition: 0.2s;
   }
+
   .home-btn:hover {
     background: rgba(0,255,204,0.1);
     box-shadow: 0 0 10px #00ffcc;
@@ -38,65 +39,115 @@
     justify-content: space-between;
     align-items: center;
   }
-  .file a {
+
+  .locked {
+    opacity: 0.4;
+  }
+
+  .countdown {
+    color: #ff4444;
+    font-size: 0.9em;
+  }
+
+  a {
     color: #00ffaa;
     text-decoration: none;
-  }
-  .file span {
-    opacity: 0.6;
-    font-size: 0.9em;
   }
 </style>
 </head>
 <body>
 
-<!-- Home button -->
 <a href="index.html" class="home-btn">🏠 Home</a>
 
 <h1>📁 Compressed Files</h1>
-<p>Auto-fetching Leaks</p>
+<p>New uploads unlock after 24 hours</p>
 
 <div id="files">Loading...</div>
 
 <script>
-const username = "Hackerslacker921"; // your GitHub username
-const repo = "SHADOWBYT3S-BL0G";    // your repo name
+const username = "Hackerslacker921";
+const repo = "SHADOWBYT3S-BL0G";
 const allowedExtensions = ['.zip','.7z','.rar','.tar.gz','.gz','.tar'];
+const LOCK_TIME = 24 * 60 * 60 * 1000; // 24 hours
 
-// Fetch all files in repo root
-fetch(`https://api.github.com/repos/${username}/${repo}/contents/`)
-  .then(res => res.json())
-  .then(data => {
-    const container = document.getElementById('files');
-    container.innerHTML = '';
+// Baseline: files before this are always unlocked
+let baseline = localStorage.getItem("baselineTime");
+if (!baseline) {
+  baseline = Date.now();
+  localStorage.setItem("baselineTime", baseline);
+}
+baseline = parseInt(baseline);
 
-    const files = data.filter(file => {
-      // Only include files with allowed compressed extensions
-      return file.type === 'file' && allowedExtensions.some(ext => file.name.toLowerCase().endsWith(ext));
-    });
+function formatTime(ms) {
+  const h = Math.floor(ms / 3600000);
+  const m = Math.floor((ms % 3600000) / 60000);
+  const s = Math.floor((ms % 60000) / 1000);
+  return `${h}h ${m}m ${s}s`;
+}
 
-    if(files.length === 0){
-      container.innerHTML = "<p>No compressed files found.</p>";
-      return;
+async function getCommitDate(path) {
+  const res = await fetch(`https://api.github.com/repos/${username}/${repo}/commits?path=${path}&per_page=1`);
+  const data = await res.json();
+  return new Date(data[0].commit.author.date).getTime();
+}
+
+async function loadFiles() {
+  const container = document.getElementById('files');
+
+  const res = await fetch(`https://api.github.com/repos/${username}/${repo}/contents/`);
+  const data = await res.json();
+
+  const files = data.filter(file =>
+    file.type === 'file' &&
+    allowedExtensions.some(ext => file.name.toLowerCase().endsWith(ext))
+  );
+
+  if (files.length === 0) {
+    container.innerHTML = "<p>No compressed files found.</p>";
+    return;
+  }
+
+  container.innerHTML = "";
+
+  for (const file of files) {
+    const commitTime = await getCommitDate(file.path);
+    const now = Date.now();
+
+    const div = document.createElement("div");
+    div.className = "file";
+
+    const sizeMB = (file.size / 1024 / 1024).toFixed(2);
+
+    // If file existed before baseline → unlocked forever
+    if (commitTime < baseline) {
+      div.innerHTML = `
+        <a href="${file.download_url}" target="_blank">${file.name}</a>
+        <span>${sizeMB} MB</span>
+      `;
+    } else {
+      const unlockTime = commitTime + LOCK_TIME;
+
+      if (now >= unlockTime) {
+        div.innerHTML = `
+          <a href="${file.download_url}" target="_blank">${file.name}</a>
+          <span>${sizeMB} MB</span>
+        `;
+      } else {
+        const remaining = unlockTime - now;
+        div.classList.add("locked");
+        div.innerHTML = `
+          <span>🔒 ${file.name}</span>
+          <span class="countdown">${formatTime(remaining)}</span>
+        `;
+      }
     }
 
-    files.forEach(file => {
-      const div = document.createElement('div');
-      div.className = 'file';
-      div.innerHTML = `<a href="${file.download_url}" target="_blank">${file.name}</a>
-                       <span>${(file.size/1024/1024).toFixed(2)} MB</span>`;
-      container.appendChild(div);
-    });
-  })
-  .catch(err => {
-    document.getElementById('files').innerText = "Failed to load files.";
-    console.error(err);
-  });
+    container.appendChild(div);
+  }
+}
+
+loadFiles();
 </script>
 
 </body>
 </html>
-
-
-
-
