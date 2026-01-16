@@ -67,10 +67,9 @@
 <script>
 const username = "Hackerslacker921";
 const repo = "SHADOWBYT3S-BL0G";
-const allowedExtensions = ['.zip','.7z','.rar','.tar.gz','.gz','.tar'];
+const allowedExtensions = ['.zip', '.7z'];
 const LOCK_TIME = 24 * 60 * 60 * 1000; // 24 hours
 
-// Baseline: files before this are always unlocked
 let baseline = localStorage.getItem("baselineTime");
 if (!baseline) {
   baseline = Date.now();
@@ -93,7 +92,6 @@ async function getCommitDate(path) {
 
 async function loadFiles() {
   const container = document.getElementById('files');
-
   const res = await fetch(`https://api.github.com/repos/${username}/${repo}/contents/`);
   const data = await res.json();
 
@@ -111,35 +109,41 @@ async function loadFiles() {
 
   for (const file of files) {
     const commitTime = await getCommitDate(file.path);
-    const now = Date.now();
-
+    const unlockTime = commitTime + LOCK_TIME;
     const div = document.createElement("div");
     div.className = "file";
 
     const sizeMB = (file.size / 1024 / 1024).toFixed(2);
 
-    // If file existed before baseline → unlocked forever
-    if (commitTime < baseline) {
+    if (commitTime < baseline || Date.now() >= unlockTime) {
       div.innerHTML = `
         <a href="${file.download_url}" target="_blank">${file.name}</a>
         <span>${sizeMB} MB</span>
       `;
     } else {
-      const unlockTime = commitTime + LOCK_TIME;
+      div.classList.add("locked");
 
-      if (now >= unlockTime) {
-        div.innerHTML = `
-          <a href="${file.download_url}" target="_blank">${file.name}</a>
-          <span>${sizeMB} MB</span>
-        `;
-      } else {
-        const remaining = unlockTime - now;
-        div.classList.add("locked");
-        div.innerHTML = `
-          <span>🔒 ${file.name}</span>
-          <span class="countdown">${formatTime(remaining)}</span>
-        `;
-      }
+      const countdownSpan = document.createElement("span");
+      countdownSpan.className = "countdown";
+
+      const nameSpan = document.createElement("span");
+      nameSpan.textContent = "🔒 " + file.name;
+
+      div.appendChild(nameSpan);
+      div.appendChild(countdownSpan);
+
+      setInterval(() => {
+        const remaining = unlockTime - Date.now();
+        if (remaining <= 0) {
+          div.classList.remove("locked");
+          div.innerHTML = `
+            <a href="${file.download_url}" target="_blank">${file.name}</a>
+            <span>${sizeMB} MB</span>
+          `;
+        } else {
+          countdownSpan.textContent = formatTime(remaining);
+        }
+      }, 1000);
     }
 
     container.appendChild(div);
